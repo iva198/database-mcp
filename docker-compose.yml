@@ -1,21 +1,18 @@
-version: '3.8'
-
 services:
   # PostgreSQL with PostGIS
   postgres:
     image: postgis/postgis:16-3.4
     container_name: database-mcp-postgres
     environment:
-      POSTGRES_DB: testdb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d testdb"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,8 +26,8 @@ services:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: ""
     ports:
-      - "9000:9000"  # Native protocol
-      - "8123:8123"  # HTTP interface
+      - "9001:9000"  # Native protocol
+      - "8124:8123"  # HTTP interface
     volumes:
       - clickhouse_data:/var/lib/clickhouse
       - ./scripts/init-clickhouse.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -45,8 +42,8 @@ services:
     build: .
     container_name: database-mcp-server
     environment:
-      DB_PRIMARY_URL: "postgres://postgres:password@postgres:5432/testdb?sslmode=disable"
-      DB_ANALYTICS_URL: "clickhouse://clickhouse:9000/default"
+      DB_PRIMARY_URL: "postgres://postgres:password@postgres:5432/postgres?sslmode=disable"
+      DB_ANALYTICS_URL: "clickhouse://default:@clickhouse:9000/default"
       READ_ONLY: "true"
       MAX_ROWS: "10000"
       QUERY_TIMEOUT_MS: "30000"

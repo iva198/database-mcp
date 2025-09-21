@@ -48,6 +48,23 @@ test: ## Run tests
 	@echo "Running tests..."
 	go test -race -cover ./...
 
+test-manual: ## Start databases and run manual test script
+	@echo "Starting manual testing environment..."
+	@docker compose up -d postgres clickhouse
+	@echo "Waiting for databases to be ready..."
+	@sleep 15
+	@echo "Run the following commands to test:"
+	@echo "1. Interactive Python tester: ./test-interactive.py"
+	@echo "2. Comprehensive test:        ./test-interactive.py --comprehensive"
+	@echo "3. Manual JSON-RPC:          ./test-manual.sh"
+
+test-comprehensive: build ## Build and run comprehensive tests
+	@echo "Running comprehensive tests..."
+	@docker compose up -d postgres clickhouse
+	@echo "Waiting for databases to be ready..."
+	@sleep 15
+	@./test-interactive.py --comprehensive
+
 test-verbose: ## Run tests with verbose output
 	@echo "Running tests (verbose)..."
 	go test -race -cover -v ./...
@@ -85,12 +102,18 @@ clean: ## Clean build artifacts
 	rm -f coverage.out coverage.html
 
 # Development environment
-dev: ## Start development environment with Docker Compose
+dev: ## Start development environment with databases
 	@echo "Starting development environment..."
-	docker-compose up -d postgres clickhouse
-	@echo "Databases are starting up..."
-	@echo "PostgreSQL: localhost:5432 (user: postgres, pass: password, db: testdb)"
-	@echo "ClickHouse: localhost:9000 (user: default, db: default)"
+	docker compose up -d postgres clickhouse
+	@echo "Databases starting... Use 'make logs' to see progress"
+
+clean: ## Clean build artifacts and Docker containers
+	@echo "Cleaning up..."
+	rm -rf bin/
+	docker compose down
+
+logs: ## Show database logs
+	docker compose logs -f
 
 dev-stop: ## Stop development environment
 	@echo "Stopping development environment..."
